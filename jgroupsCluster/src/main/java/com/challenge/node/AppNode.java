@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 	JChannel channel;
 	String user_name = System.getProperty("user.name", "n/a");
 	final List<String> state = new LinkedList<String>();
-	private final String testLine ="We are started!";
+	private final String testLine ="We are started!";	
 
 	private final String OK = "OK";
 	private final String NOK = "NOK";
@@ -45,6 +45,26 @@ import org.slf4j.LoggerFactory;
 		
 		this.isCompleted=isCompleted;
 		this.view = view;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		new AppNode().start();
+	}
+	
+	private void start() throws Exception {
+
+		channel = new JChannel();
+		channel.setReceiver(this);
+		channel.connect("Cluster");
+		channel.getState(null, 10000);
+
+		int totalNodesInCluster = waitForAllAvailableNodes();
+		logger.debug("Number Of Nodes:" + totalNodesInCluster);
+		performTask();
+
+		waitForExitCommand();
+
+		channel.close();
 	}
 	
 	public void viewAccepted(View new_view) {
@@ -98,21 +118,7 @@ import org.slf4j.LoggerFactory;
 		}
 	}
 
-	private void start() throws Exception {
-
-		channel = new JChannel();
-		channel.setReceiver(this);
-		channel.connect("Cluster");
-		channel.getState(null, 10000);
-
-		int totalNodesInCluster = waitForAllAvailableNodes();
-		logger.debug("Number Of Nodes:" + totalNodesInCluster);
-		performTask();
-
-		waitForExitCommand();
-
-		channel.close();
-	}
+	
 
 	public void performTask() {
 		if (isCoordinator() && isCompleted == false) {
@@ -168,10 +174,7 @@ import org.slf4j.LoggerFactory;
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-		new AppNode().start();
-
-	}
+	
 
 	public Address getCoordinator() {
 		return this.channel.view().getCoord();
